@@ -1,0 +1,210 @@
+\documentclass[12pt]{article}
+
+% --- Lingua e Codifica ---
+\usepackage[italian,english]{babel}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{bm}
+
+% --- Colori e Grafica ---
+\usepackage[table,xcdraw,svgnames]{xcolor} 
+\usepackage{graphicx} % Required for inserting images & resizing
+
+% --- Tabelle ---
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+
+% --- Formattazione e Layout ---
+\usepackage[italian]{minitoc}
+\usepackage{fancybox}
+\usepackage{fancyhdr}
+\usepackage{lscape}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{soul}
+
+% --- Utilità e Codice ---
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{makeidx}
+\usepackage{comment}
+
+% --- Bibliografia ---
+\usepackage{biblatex}
+\addbibresource{sample.bib}
+
+% --- Collegamenti (Caricare per ultimo) ---
+
+%\titleformat{\chapter}{\normalfont\huge}{\textbf\thechapter.}{20pt}%{\huge\textbf}
+
+%inizio documento
+\begin{document}
+\selectlanguage{italian}
+
+%inizio copertina
+\begin{titlepage}
+\begin{center}
+	\begin{figure}
+    	\includegraphics[width=3.0cm, height=3.0cm]{images/unisa.png}
+    	\centering
+    \end{figure}
+	{\Large Università degli Studi di Salerno}\\[0.2truecm]
+	{\large Dipartimento di Informatica\\Corso di Laurea Triennale in Informatica}\\
+	\hrulefill
+	\vfill
+	{\large Fondamenti di Intelligenza Artificiale (FIA)}\\[0.2truecm]
+    %{\large Project Proposal}\\[0.2truecm]
+	%{\Large Informatica}\\
+	\vfill
+	{\LARGE {\bf FourSight}}\\
+	
+	\vfill\vfill
+	
+	
+	{\bf Docente} \hfill {\bf Studenti}\ \hfill  {\bf Matricola}\  \\
+	Prof.  Fabio Palomba \hfill Tozza Gennaro Carmine \hfill 0512120382 \\
+    \hfill \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Valva Lorenzo \hfill 0512119639 \\
+	\vfill
+    [\url{https://github.com/gennarocarmine/fia-project.git}]
+    \vfill
+	\hrulefill 
+	\begin{center} Anno Accademico 2025-2026 \end{center}
+	
+\end{center}
+\end{titlepage}
+%fine copertina
+
+\tableofcontents
+\newpage
+
+\section{Introduzione}
+
+\section{Definizione del problema} 
+
+\subsection{Obiettivi} 
+
+\subsection{Specifica PEAS} 
+
+\subsubsection{Caratteristiche dell’ambiente} 
+
+\subsection{Analisi del problema} 
+Il gioco "Forza 4" (Connect-4) rientra nella categoria dei giochi a somma zero, a informazione perfetta e deterministici. Sebbene le regole siano semplici, la complessità computazionale non è trascurabile.\\\\
+\noindent
+Lo spazio degli stati teorico è costituito da tutte le possibili configurazioni di una griglia $6 \times 7$ con tre possibili valori per cella (Vuoto, Giocatore 1, Giocatore 2), portando a un limite superiore di $3^{42}$ stati. Tuttavia, considerando i vincoli di gravità (le pedine devono poggiare su altre pedine o sul fondo), il numero reale di stati legali è stimato intorno a $4.5 \times 10^{12}$.
+
+\subsection{Complessità e Sfide}
+Nonostante il gioco sia stato "risolto" matematicamente (il primo giocatore ha una strategia vincente se gioca perfettamente), per un agente limitato da risorse computazionali e tempo di risposta (real-time interaction), la ricerca esaustiva è impraticabile.
+Il problema richiede quindi l'utilizzo di euristiche o approssimatori di funzione per valutare la bontà di una mossa senza dover esplorare l'intero albero di gioco fino alle foglie.
+
+\section{Dataset e Data Engineering}
+Per soddisfare il requisito di progetto relativo alla gestione attiva dei dati, abbiamo evitato l'utilizzo di dataset pre-confezionati. Abbiamo invece sviluppato una procedura di generazione di dati sintetici, necessaria per applicare tecniche di apprendimento supervisionato in un contesto di gioco.
+
+\subsection{Metodologia di Generazione e Etichettatura}
+Non disponendo di un esperto umano per etichettare migliaia di configurazioni, abbiamo utilizzato un approccio algoritmico.
+La pipeline di generazione dei dati, implementata nello script \texttt{generate\_dataset.py}, segue questi passi:
+
+\begin{enumerate}
+    \item \textbf{Campionamento dello Spazio degli Stati:} Vengono simulate partite casuali fino a raggiungere un numero di mosse variabile $N \in [4, 24]$. Questo permette di ottenere configurazioni di "metà partita" variegate e realistiche, evitando che la rete apprenda solo le fasi iniziali.
+    
+    \item \textbf{Etichettatura tramite Oracolo (Minimax):} Per determinare il target $y$ (chi sta vincendo?), utilizziamo l'algoritmo Minimax come "Oracolo". L'algoritmo esplora l'albero di gioco a profondità limitata e calcola un punteggio euristico per la configurazione corrente.
+    
+    \item \textbf{Discretizzazione:} Il punteggio numerico restituito dal Minimax viene convertito in classi discrete per la classificazione:
+    \begin{itemize}
+        \item Classe 1: Vittoria sicura/probabile del Giocatore 1.
+        \item Classe -1: Vittoria sicura/probabile del Giocatore 2 (AI).
+        \item Classe 0: Situazione di pareggio o incerta.
+    \end{itemize}
+\end{enumerate}
+\noindent
+Questa metodologia ci ha permesso di creare un dataset bilanciato e rappresentativo delle diverse fasi del gioco, fornendo alla rete neurale un'ampia varietà di esempi per l'addestramento.
+
+\subsection{Struttura del File Dati (CSV)}
+Il dataset costruito (\texttt{connect4\_dataset\_hq.csv}) segue una struttura tabellare standard ed è composto da un totale di \textbf{43 colonne} per ogni riga (campione).\\\\
+\noindent
+Le prime 42 colonne rappresentano lo stato completo della scacchiera. Poiché Forza 4 si gioca su una griglia bidimensionale di dimensioni $R=6$ (righe) e $C=7$ (colonne), il numero totale di celle è 42. \\\\
+\noindent
+Per rendere i dati compatibili con l'input del Multi-Layer Perceptron, la matrice 2D viene sottoposta a un processo di \textbf{linearizzazione} (flattening), trasformandola in un vettore 1D.
+
+\begin{itemize}
+    \item \textbf{Input ($X$):} Le colonne sono etichettate da \texttt{pos\_0} a \texttt{pos\_41}. L'indice $i$ della feature \texttt{pos\_i} corrisponde alla cella della scacchiera alle coordinate $(r, c)$ secondo la formula $i = r \times 7 + c$. Ogni cella contiene un valore intero discreto:
+    \begin{itemize}
+        \item $0$: Cella Vuota.
+        \item $1$: Pedina del Giocatore 1.
+        \item $-1$: Pedina del Giocatore 2.
+    \end{itemize}
+    
+    \item \textbf{Target ($y$):} L'ultima colonna, denominata \texttt{winner}, costituisce l'etichetta di classe per l'addestramento supervisionato. Questa colonna non contiene una mossa, ma la valutazione strategica fornita dall'Oracolo ($1, -1, 0$).
+\end{itemize}
+\noindent
+Per la definizione dello schema dei dati, abbiamo preso a riferimento il \textit{Connect-4 Game Dataset}\cite{2}. Sebbene i dati siano stati generati internamente per garantire il controllo sulla distribuzione, abbiamo deciso di mantenere la medesima struttura logica del dataset di riferimento. \\\\
+\noindent
+Questa scelta garantisce l'interoperabilità e permette il confronto con standard consolidati nel dominio del Machine Learning applicato ai giochi da tavolo.
+
+\section{Soluzione del problema}
+Il progetto FourSight implementa e confronta due approcci radicalmente diversi per la risoluzione del problema: un approccio simbolico basato sulla ricerca (Pipeline A) e un approccio connessionista basato sull'apprendimento (Pipeline B).
+
+\subsection{Pipeline A: Minimax con Alpha-Beta Pruning}
+Questa pipeline rappresenta l'approccio classico dell'Intelligenza Artificiale simbolica. L'agente non "impara", ma "ragiona" esplorando le conseguenze future delle azioni.
+
+\subsubsection{Cenni Teorici}
+L'algoritmo Minimax è una procedura ricorsiva per la scelta della mossa ottimale in giochi avversari. Dato uno stato $S$:
+\begin{itemize}
+    \item \textbf{MAX (Agente):} Cerca di massimizzare il valore della funzione di utilità.
+    \item \textbf{MIN (Avversario):} Cerca di minimizzare il valore della funzione di utilità.
+\end{itemize}
+\noindent
+Il valore di un nodo è determinato ricorsivamente dai valori dei suoi figli. Per ottimizzare la ricerca, abbiamo implementato la potatura \textbf{Alpha-Beta Pruning}.\\\\
+\noindent
+Questa tecnica mantiene due parametri, $\alpha$ (miglior valore per MAX) e $\beta$ (miglior valore per MIN). Se durante l'esplorazione si trova una mossa che peggiora la situazione rispetto a quanto già garantito dai rami precedenti, l'intero ramo viene tagliato (pruned). Ciò riduce la complessità temporale nel caso medio da $O(b^d)$ a $O(b^{d/2})$, permettendo esplorazioni più profonde a parità di tempo.
+
+\subsection{Pipeline B: Apprendimento Automatico (MLP)}
+La seconda soluzione applica i concetti di apprendimento supervisionato discussi nel corso, utilizzando una rete neurale per approssimare la funzione di valutazione.
+
+\subsubsection{Architettura della Rete Neurale}
+Abbiamo progettato un Multi-Layer Perceptron (MLP), una rete neurale feed-forward costituita da strati densi completamente connessi.
+La scelta di questa architettura non è casuale ma necessaria. I percettroni a singolo strato sono limitati alla risoluzione di problemi linearmente separabili\cite{3}.\\\\
+\noindent
+Poiché la valutazione di una scacchiera di Forza 4 presenta confini decisionali altamente non lineari (una singola pedina può cambiare l'esito da sconfitta a vittoria), è indispensabile l'introduzione di strati nascosti (\textit{hidden layers}).\\\\
+\noindent
+La topologia implementata sfrutta la capacità dell'MLP di agire come approssimatore universale di funzioni ed è così composta:
+
+\begin{enumerate}
+    \item \textbf{Input Layer (42 Neuroni):} Riceve il vettore linearizzato della scacchiera.
+    \item \textbf{Hidden Layers (64 e 32 Neuroni):} Due strati densi incaricati di estrarre feature latenti dalle posizioni delle pedine.
+    \item \textbf{Activation Function (ReLU):} Utilizziamo la \textit{Rectified Linear Unit} ($f(x) = \max(0, x)$) per gli strati nascosti. Questa funzione è preferita alla sigmoide per le reti profonde in quanto mitiga il problema del \textit{vanishing gradient} e favorisce una convergenza più rapida.
+    \item \textbf{Output Layer (Classificazione):} Restituisce la predizione sulla classe vincente.
+\end{enumerate}
+
+\subsubsection{Addestramento (Backpropagation)}
+Il modello è stato addestrato utilizzando l'algoritmo di \textbf{Backpropagation} (propagazione all'indietro dell'errore).
+L'obiettivo dell'addestramento è muoversi sulla "superficie dell'errore" per trovare il minimo globale, ovvero la configurazione di pesi che minimizza la differenza tra l'output della rete e il target desiderato. \cite{4} \\\\
+\noindent
+Il ciclo di apprendimento per ogni epoca segue tre passi fondamentali:
+
+\begin{enumerate}
+    \item \textbf{Forward Pass:} Il vettore di input (la scacchiera) attraversa la rete strato per strato fino a produrre un output finale.
+    
+    \item \textbf{Calcolo dell'Errore:} Viene calcolata la differenza tra l'output prodotto dalla rete e il target corretto fornito dall'Oracolo Minimax.
+    
+    \item \textbf{Backward Pass:} L'errore viene propagato all'indietro dall'output verso l'input. I pesi delle connessioni vengono aggiornati proporzionalmente al gradiente negativo dell'errore (Discesa del Gradiente), permettendo alla rete di correggere progressivamente le proprie predizioni.
+\end{enumerate}
+\noindent
+Questo processo iterativo consente al modello di apprendere la strategia di gioco codificata nei dati sintetici, riducendo l'errore di classificazione nel tempo.
+
+
+
+
+
+
+\printbibliography
+
+\end{document}
