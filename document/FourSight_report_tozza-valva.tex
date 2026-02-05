@@ -1,0 +1,164 @@
+\documentclass[12pt]{article}
+
+% --- Lingua e Codifica ---
+\usepackage[italian,english]{babel}
+
+% --- Matematica ---
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{bm}
+
+% --- Colori e Grafica ---
+\usepackage[table,xcdraw,svgnames]{xcolor} 
+\usepackage{graphicx} % Required for inserting images & resizing
+
+% --- Tabelle ---
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+
+% --- Formattazione e Layout ---
+\usepackage[italian]{minitoc}
+\usepackage{fancybox}
+\usepackage{fancyhdr}
+\usepackage{lscape}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{soul}
+
+% --- Utilità e Codice ---
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{makeidx}
+\usepackage{comment}
+
+% --- Bibliografia ---
+\usepackage{biblatex}
+\addbibresource{sample.bib}
+
+% --- Collegamenti (Caricare per ultimo) ---
+
+%\titleformat{\chapter}{\normalfont\huge}{\textbf\thechapter.}{20pt}%{\huge\textbf}
+
+%inizio documento
+\begin{document}
+\selectlanguage{italian}
+
+%inizio copertina
+\begin{titlepage}
+\begin{center}
+	\begin{figure}
+    	\includegraphics[width=3.0cm, height=3.0cm]{images/unisa.png}
+    	\centering
+    \end{figure}
+	{\Large Università degli Studi di Salerno}\\[0.2truecm]
+	{\large Dipartimento di Informatica\\Corso di Laurea Triennale in Informatica}\\
+	\hrulefill
+	\vfill
+	{\large Fondamenti di Intelligenza Artificiale (FIA)}\\[0.2truecm]
+    %{\large Project Proposal}\\[0.2truecm]
+	%{\Large Informatica}\\
+	\vfill
+	{\LARGE {\bf FourSight}}
+	
+	\vfill\vfill
+	
+	
+	{\bf Docente} \hfill {\bf Studenti}\ \hfill  {\bf Matricola}\  \\
+	Prof.  Fabio Palomba \hfill Tozza Gennaro Carmine \hfill 0512120382 \\
+    \hfill \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Valva Lorenzo \hfill 0512119639 \\
+	\vfill
+    [\url{https://github.com/gennarocarmine/fia-project.git}]
+    \vfill
+	\hrulefill 
+	\begin{center} Anno Accademico 2025-2026 \end{center}
+	
+\end{center}
+\end{titlepage}
+%fine copertina
+
+\section{Introduzione}
+Il periodo festivo porta con sé panettoni, calze e gli immancabili parenti che si lamentano dell'Intelligenza Artificiale mentre guardano video di gattini che ballano sui social. Ma porta anche le giocate a carte. È stato proprio durante l'ennesima partita persa a Sette e Mezzo che è sorta la domanda: "E se al nostro posto giocasse un'IA?".\\\\
+\noindent
+Da questa sfida nasce \textbf{(IA)'M FINE}. Il nome è un gioco di parole che richiama la tipica frase "Sto bene" (I'm fine), utilizzata dal giocatore per indicare che non desidera ricevere ulteriori carte.\\\\
+\noindent
+Per chi avesse bisogno di un ripasso delle regole ufficiali, sono disponibili al seguente indirizzo: \\
+\url{https://www.sisal.it/Store/Skill/Download/setteemezzo-ga.pdf}.
+
+\section{Definizione del problema} 
+Forza 4 è un gioco di strategia a turni a somma zero che si svolge su una griglia verticale di 6 righe per 7 colonne. L'obiettivo è allineare quattro gettoni del proprio colore in orizzontale, verticale o diagonale, sfruttando la meccanica della gravità. \\\\
+\noindent
+Dal punto di vista dell'Intelligenza Artificiale, il gioco rappresenta un problema a informazione perfetta e deterministico. La sfida risiede nella complessità computazionale. L'obiettivo è calcolare l'azione ottimale (scelta della colonna) prevedendo l emosse future dell'avversario per massimizzare le possibilità di vittoria.
+
+\subsection{Obiettivi} 
+L'obiettivo principale del progetto è sviluppare e confrontare due diversi approcci per la risoluzione del gioco "Forza 4": uno basato sulla teoria della ricerca nello spazio degli stati e uno basato sull'apprendimento automatico supervisionato. Il sistema non utilizzerà dataset precostruiti, ma genererà autonomamente i dati necesaari per l'addestramento. Nello specifico, gli obiettivi sono:
+\begin{itemize}
+    \item \textbf{Generare un Dataset:} Creare un dataset di training personalizzato che superi i limiti delle simulazioni puramente casuali (Random vs Random). Il dataset verrà generato registrando partite miste:
+     \begin{itemize}
+        \item Bot Random vs Bot Random: Per esplorare lo spazio degli stati in modo ampio.
+        \item Minimax vs Random: Per insegnare alla rete neurale pattern strategici, mosse di blocco e sequenze vincenti, garantendo dati di qualità superiore per l'addestramento.
+     \end{itemize}
+     L'obiettivo è ottenere un dataset ricco e variegato che consenta alla rete neurale di apprendere strategie efficaci.
+    \item \textbf{Implementare la pipeline di Ricerca(Minimax):} Sviluppare un agente basato sull'algoritmo Minimax con Alpha-Beta Pruning. Questo modulo avrà il duplice scopo di:
+     \begin{itemize}
+        \item Fornire un avversario algoritmico "forte" in grado di calcolare la mossa ottimale esplorando l'albero di gioco.
+        \item Agire come "oracolo" per la generazione dei dati di training.
+     \end{itemize}
+    \item \textbf{Implementare la pipeline di Apprendimento (MLP):} Sviluppare e addestrare una rete neurale (MLP) utilizzando il dataset generato. L'obiettivo è ottenere un modello in grado di predire la mossa migliore istantaneamente (approssimando la funzione di valutazione), imitando la logica del Minimax ma con tempi di risposta drasticamente inferiori.
+    \item \textbf{Sviluppare un'interfaccia interattiva:} Creare un interfaccia grafica che permetta all'utente di sfidare entrambe le IA (Minmax e MLP).
+\end{itemize}
+
+\subsection{Specifica PEAS} 
+La descrizione formale dell'ambiente operativo dell'agente è definita secondo il modello PEAS (\textit{Performance, Environment, Actuators, Sensors}):
+
+\begin{itemize}
+    \item \textbf{Performance (Misure di Prestazione):}
+    \begin{itemize}
+        \item Efficienza: Numero di mosse minimo per raggiungere la vittoria.
+        \item Correttezza: Evitare mosse non valide (es. inserire in una colonna piena).
+        \item Velocità di risposta: Tempo impiegato per calcolare la mossa.
+        \item Tasso di vittoria: Percentuale di partite vinte contro vari tipi di avversari.
+    \end{itemize}
+    
+    \item \textbf{Environment (Ambiente):}
+    \begin{itemize}
+        \item Griglia di gioco:Una matrice 6 X 7.
+        \item Avversario: Un essere umano o un'altra IA.
+    \end{itemize}
+    
+    \item \textbf{Actuators (Attuatori/Azioni):}
+    \begin{itemize}
+        \item \textit{Inserimento gettone}: l'attuatore sceglie una delle 7 colonne disponibili.
+        \item \textit{Segnalazione}: comunicazione della mossa o dichiarazione di vittoria/resa.
+    \end{itemize}
+    
+    \item \textbf{Sensors (Sensori/Percezioni):}
+    \begin{itemize}
+        \item Lettore di matrice: Funzione che scansiona lo sttao attuale della scacchiera per sapere dove sono i propri gettoni, quelli dell'avversario e gli spazi vuoti.
+        \item Rilevatore di turno: Funziona che indica alla'gente quando è il suo momento di agire.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Caratteristiche dell’ambiente} 
+L'ambiente di gioco Forza 4 presenta le seguenti proprietà:
+\begin{itemize}
+    \item \textbf{Completamente Osservabile:} L'agente vede l'intera griglia di gioco, non ci osno informazioni nascoste.
+    \item \textbf{Deterministico:} Lo stato successivo dell'ambiente è completamente determinato dallo stato corrente e dall'azione eseuita dall'agente.
+    \item \textbf{Discreto:} L'ambiente fornisce un numero limitato di percezioni e azioni distinte, chiaramente definite.
+\end{itemize}
+
+\subsection{Analisi del problema} 
+
+\section{Soluzione del problema}
+
+\section{Riferimenti}
+
+\printbibliography
+
+\end{document}
