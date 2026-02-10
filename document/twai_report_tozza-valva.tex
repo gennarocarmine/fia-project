@@ -309,7 +309,7 @@ L'accuratezza globale dell'84\% è un ottimo risultato, ma dove sbaglia l'IA? La
 
 \begin{figure}[H]
     \centering
-        \includegraphics[width=1\linewidth]{images/confusion_matrix.png}
+        \includegraphics[width=0.75\linewidth]{images/confusion_matrix.png}
         \caption{Matrice di Confusione (Modello preliminare, dataset ridotto).}
 \end{figure}
 \noindent
@@ -347,7 +347,7 @@ Questo risultato conferma che per giochi posizionali complessi come Forza 4, la 
 
 \begin{figure}[H]
     \centering
-     \includegraphics[width=1\linewidth]{images/confusion_matrix_100k.png} 
+     \includegraphics[width=0.75\linewidth]{images/confusion_matrix_100k.png} 
     \caption{Matrice di Confusione (Modello finale su 100k campioni).}
 \end{figure}
 
@@ -383,6 +383,15 @@ Il confronto finale evidenzia due filosofie opposte:
     \item \textbf{MLP (Rete Neurale):} Una volta addestrata, ha un tempo di inferenza costante e bassissimo ($O(1)$), indipendentemente dalla complessità della scacchiera. Tuttavia, essendo un approccio probabilistico, può commettere errori "umani" in configurazioni mai viste.
 \end{enumerate}
 
+\section{Conclusioni}
+Il progetto T.W.A.I. ha raggiunto l'obiettivo di confrontare due paradigmi fondamentali dell'Intelligenza Artificiale applicati a un dominio a informazione perfetta. \\
+I risultati confermano che, mentre l'approccio simbolico (Minimax) rimane insuperabile in termini di correttezza formale, l'approccio connessionista (MLP) offre un vantaggio decisivo in termini di scalabilità temporale, al costo di una marginale perdita di precisione.\\\\
+\noindent
+L'esperienza ha inoltre evidenziato l'importanza cruciale della fase di Data Engineering: la qualità del dataset generato si è rivelata più determinante dell'architettura della rete stessa per il successo dell'apprendimento.\\\\
+\noindent
+In conclusione, T.W.A.I. dimostra che, sebbene "Tris Was Already Invented", c'è ancora spazio per l'innovazione e la sperimentazione nell'ambito dei giochi da tavolo, offrendo spunti interessanti per futuri sviluppi in IA. 
+
+\newpage    
 \printbibliography
 
 \end{document}
