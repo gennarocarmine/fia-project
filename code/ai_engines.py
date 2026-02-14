@@ -60,9 +60,9 @@ def minimax(board, depth, alpha, beta, maximizingPlayer):
     if depth == 0 or is_terminal:
         if is_terminal:
             if gl.winning_move(board, gl.AI_PIECE):
-                return (None, 100000000000000) # Vittoria certa
+                return (None, 100000000000000 + depth) # Vittoria certa
             elif gl.winning_move(board, gl.PLAYER_PIECE):
-                return (None, -10000000000000) # Sconfitta certa
+                return (None, -10000000000000 - depth) # Sconfitta certa
             else: # Pareggio
                 return (None, 0)
         else: # Profondità 0, usa l'euristica
@@ -114,8 +114,25 @@ def minimax(board, depth, alpha, beta, maximizingPlayer):
 
 def get_neural_move(model, board):
     valid_locations = gl.get_valid_locations(board)
+
+    for col in valid_locations:
+        row = gl.get_next_open_row(board, col)
+        temp_board = board.copy()
+        gl.drop_piece(temp_board, row, col, gl.AI_PIECE)
+        if gl.winning_move(temp_board, gl.AI_PIECE):
+            return col 
+            
+    for col in valid_locations:
+        row = gl.get_next_open_row(board, col)
+        temp_board = board.copy()
+        gl.drop_piece(temp_board, row, col, gl.PLAYER_PIECE)
+        if gl.winning_move(temp_board, gl.PLAYER_PIECE):
+            return col 
+
     best_score = -100
     best_col = random.choice(valid_locations)
+    
+    random.shuffle(valid_locations) 
     
     for col in valid_locations:
         row = gl.get_next_open_row(board, col)
@@ -126,10 +143,13 @@ def get_neural_move(model, board):
         prediction = model.predict(flat_board)[0]
         
         score = 0
-        if prediction == 1: score = 10     # AI vince
-        elif prediction == 0: score = 0    # Pareggio
-        else: score = -10                  # Player vince (AI perde)
+        if prediction == 1: score = -50    # Vince P1 (Male per AI)
+        elif prediction == 0: score = 0    # Pareggio (Neutro)
+        elif prediction == -1: score = 100 # Vince AI (Ottimo)
         
+        if col == 3: score += 5
+        elif col == 2 or col == 4: score += 2
+
         if score > best_score:
             best_score = score
             best_col = col
