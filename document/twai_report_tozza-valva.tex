@@ -459,15 +459,16 @@ Per mitigare questo effetto, abbiamo introdotto l'ottimizzazione di Ordinamento 
 4 & 0.0111 & $\sim 2,400$  \\
 5 & 0.0310 & $\sim 16,800$ \\
 6 & \textbf{0.1328} & $\sim 117,000$ \\
+7 & 0.2956 & $\sim 820,000$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 \noindent
 \subsubsection*{Analisi del miglioramento}
-Il confronto tra le due configurazioni evidenzia l'efficacia dell'ottimizzazione. A profondità $d=6$, il tempo di calcolo scende da \textbf{0.2858s} a \textbf{0.1328s}.\\\\
-\noindent
-Grazie a questo incremento di efficienza, abbiamo identificato in \textbf{$d=6$} la configurazione ideale per il sistema finale. Con un tempo di risposta ora ben al di sotto della soglia di percezione (0.13s), l'IA offre un'esperienza di gioco fluida e immediata ("Real-time"), pur mantenendo una profondità di analisi strategica elevata. Spingersi a $d=7$ rimane sconsigliato, in quanto porterebbe i tempi oltre il secondo, degradando la User Experience senza offrire un vantaggio tattico proporzionale contro un giocatore medio.
 
+Il confronto tra le due configurazioni evidenzia drasticamente l'efficacia dell'ottimizzazione. A parità di profondità $d=6$, il tempo di calcolo è stato abbattuto di oltre il \textbf{50\%}, scendendo da \textbf{0.2858s} a \textbf{0.1328s}. \\\\
+Un dato particolarmente interessante emerge osservando il passo successivo: spingendo l'algoritmo ottimizzato a profondità $d=7$, il tempo di esecuzione risale a \textbf{0.2956s}. Questo valore è quasi sovrapponibile a quello impiegato dall'algoritmo non ottimizzato per completare la ricerca a $d=6$ (0.2858s). Pertanto, spingersi a $d=7$ rimane sconsigliato, poiché significherebbe vanificare il margine di guadagno ottenuto, riportando il sistema ai limiti della latenza percepibile. \\\\
+Abbiamo identificato in \textbf{$d=6$} la configurazione ideale per il sistema finale. Con un tempo di risposta ora ben al di sotto della soglia di percezione (0.13s), l'IA offre un'esperienza di gioco fluida e immediata (``Real-time''), pur mantenendo una profondità di analisi strategica elevata.
 \subsection{Trade-off}
 Il confronto finale evidenzia due filosofie opposte:
 \begin{enumerate}
