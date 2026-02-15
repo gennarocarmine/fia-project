@@ -14,7 +14,5 @@
 *.synctex.gz
 *.toc
 *.bbl-SAVE-ERROR
-# PDF
-*.pdf
 #pychace__ files
 __pycache__/
