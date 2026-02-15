@@ -41,6 +41,28 @@ def run_analysis():
     plt.savefig('images/training_loss_curve.png') # Assicurati che la cartella images esista
     print("Grafico Loss salvato in 'images/training_loss_curve.png'")
 
+    plt.figure(figsize=(12, 5))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(mlp.loss_curve_, label='Training Loss', color='red')
+    plt.title('Discesa del Gradiente (Loss)', fontsize=12)
+    plt.xlabel('Epoche')
+    plt.ylabel('Loss')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(mlp.validation_scores_, label='Validation Accuracy', color='green')
+    plt.title('Capacità di Generalizzazione', fontsize=12)
+    plt.xlabel('Epoche')
+    plt.ylabel('Accuracy')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig('images/training_performance.png', dpi=300)
+    print("Grafico Performance salvato in 'images/training_performance.png'")
+
     y_pred = mlp.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
     

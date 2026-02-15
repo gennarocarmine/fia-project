@@ -152,8 +152,7 @@ if not st.session_state.game_over and st.session_state.turn == 1:
     start_time = time.time()
     
     if algo_choice.startswith("Minimax"):
-        # Profondità 5 per bilanciare velocità e intelligenza
-        col, _ = ai.minimax(st.session_state.board, 5, -float('inf'), float('inf'), True)
+        col, _ = ai.minimax(st.session_state.board, 6, -float('inf'), float('inf'), True)
     else:
         # MLP
         if mlp_model:
