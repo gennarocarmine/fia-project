@@ -178,11 +178,11 @@ La descrizione formale dell'ambiente operativo dell'agente è definita secondo i
         \item Rilevatore di turno: Funzione che indica all'agente quando è il suo momento di agire.
     \end{itemize}
 \end{itemize}
-
+\newpage
 \subsubsection{Caratteristiche dell’ambiente} 
 L'ambiente di gioco Forza 4 presenta le seguenti proprietà:
 \begin{itemize}
-    \item \textbf{Completamente Osservabile:} L'agente vede l'intera griglia di gioco, non ci osno informazioni nascoste.
+    \item \textbf{Completamente Osservabile:} L'agente vede l'intera griglia di gioco, non ci sono informazioni nascoste.
     \item \textbf{Deterministico:} Lo stato successivo dell'ambiente è completamente determinato dallo stato corrente e dall'azione eseuita dall'agente.
     \item \textbf{Discreto:} L'ambiente fornisce un numero limitato di percezioni e azioni distinte, chiaramente definite.
 \end{itemize}
@@ -232,8 +232,6 @@ Per garantire che la rete neurale apprenda da una varietà di configurazioni non
     \end{itemize}
 \end{enumerate}
 \noindent
-\textbf{Nota sul Bilanciamento:} Poiché il gioco del Forza 4 tende a favorire il primo giocatore, il dataset grezzo presentava un leggero sbilanciamento verso la classe 1. In fase di post-processing, abbiamo applicato un sottocampionamento (\textit{undersampling}) della classe maggioritaria per ottenere una distribuzione finale bilanciata ($\approx 33\%$ per classe).
-
 
 \subsection{Struttura del File Dati (CSV)}
 Il dataset costruito (\texttt{connect4\_dataset\_hq.csv}) segue una struttura tabellare standard ed è composto da un totale di \textbf{43 colonne} per ogni riga (campione).\\\\
@@ -270,12 +268,14 @@ L'algoritmo Minimax è un metodo ricorsivo decisionale utilizzato nella teoria d
     \item \textbf{MIN (Avversario):} Tenta di minimizzare lo stesso valore (ovvero, massimizzare il proprio vantaggio).
 \end{itemize}
 \noindent
-Il valore di un nodo (stato di gioco) è calcolato retropagando i valori dai nodi foglia fino alla radice. Tuttavia, la complessità temporale di base O($b^d$) l'algoritmo impraticabile per profondità elevate. Per ottimizzare la ricerca, abbiamo implementato la potatura \textbf{Alpha-Beta Pruning}.\\\\
+Il valore di un nodo (stato di gioco) è calcolato retropagando i valori dai nodi foglia fino alla radice. Tuttavia, la complessità temporale di base O($b^d$) rende l'algoritmo impraticabile per profondità elevate. Per ottimizzare la ricerca, abbiamo implementato la potatura \textbf{Alpha-Beta Pruning}.\\\\
 \noindent
-Questa tecnica mantiene due parametri, $\alpha$ (miglior valore per MAX) e $\beta$ (miglior valore per MIN). Se durante l'esplorazione si trova una mossa che peggiora la situazione rispetto a quanto già garantito dai rami precedenti, l'intero sotto-albero viene tagliato (pruned). Ciò riduce la complessità temporale nel caso medio da $O(b^d)$ a $O(b^{d/2})$, permettendo all'agente di esplorare una profondità doppia rispetto al Minimax puronello stesso intervallo di tempo.
+Questa tecnica mantiene due parametri, $\alpha$ (miglior valore per MAX) e $\beta$ (miglior valore per MIN). Se durante l'esplorazione si trova una mossa che peggiora la situazione rispetto a quanto già garantito dai rami precedenti, l'intero sotto-albero viene tagliato (pruned).\\\\
+\noindent
+Ciò riduce la complessità temporale nel caso medio da $O(b^d)$ a $O(b^{d/2})$, permettendo all'agente di esplorare una profondità doppia rispetto al Minimax puro nello stesso intervallo di tempo.
 
 \subsubsection{Ottimizzazione: Ordinamento delle Mosse (Move Ordering)}
-L'efficacia della potatura Alpha-Beta dipende fortemente dall'ordine in cui le mosse vengono valutate. Nel caso peggiore, ovvero in cui le mosse migliori venissero esaminate per ultime, non avrebbe alcun taglio el'algoritmo degenererebbe in un Minimax puro, rendendo inutile l'ottimizzazione.\\\\
+L'efficacia della potatura Alpha-Beta dipende fortemente dall'ordine in cui le mosse vengono valutate. Nel caso peggiore, ovvero in cui le mosse migliori venissero esaminate per ultime, non avverrebbe alcun taglio e l'algoritmo degenererebbe in un Minimax puro, rendendo inutile l'ottimizzazione.\\\\
 Nel \textbf{caso migliore}, se le mosse forti vengono valutate per prime, i valori di $\alpha$ e $\beta$ convergono rapidamente, massimizzando i tagli.\\\\
 \noindent
 Per avvicinarci a questo caso ideale, abbiamo implementato un'euristica di ordinamento statico specifica per il dominio di Forza 4.
@@ -285,23 +285,51 @@ Invece di iterare le colonne in ordine sequenziale (da 0 a 6), l'algoritmo esplo
 \[ [3, 2, 4, 1, 5, 0, 6] \]
 Questa semplice accortezza permette all'algoritmo di trovare rapidamente un valore di $\alpha$ elevato (una mossa forte), massimizzando il numero di rami tagliati (pruning) e riducendo significativamente il tempo di calcolo effettivo.
 
+\subsubsection*{Perché Minimax e non Monte Carlo Tree Search (MCTS)?}
+La Monte Carlo Tree Search, resa celebre dal sistema AlphaGo di DeepMind che nel 2016 sconfisse il campione mondiale di Go Lee Sedol\cite{7},
+ rappresenta una delle tecniche più innovative degli ultimi due decenni nel campo dell'intelligenza artificiale per giochi. Nonostante la sua comprovata efficacia in domini complessi, 
+ abbiamo deliberatamente optato per il più classico algoritmo Minimax, motivati da considerazioni sia didattiche che pratiche strettamente 
+ legate alle caratteristiche specifiche del Forza 4.\\\\
+\noindent
+La prima ragione fondamentale risiede nella natura del \textbf{fondamento teorico} dei due approcci. Il Minimax è un algoritmo deterministico con garanzie formali di ottimalità (assumendo una funzione di valutazione perfetta). La MCTS, basata su simulazioni stocastiche, richiede migliaia di rollout per convergere a una buona stima, introducendo variabilità nei risultati.\\\\
+\noindent
+La seconda motivazione emerge dall'analisi dell'\textbf{efficienza computazionale relativa} nei giochi con diversi gradi di complessità combinatoria. Il Forza 4 presenta un branching factor relativamente contenuto: a ogni turno, un giocatore può scegliere tra al massimo 7 colonne (spesso meno, poiché alcune colonne potrebbero essere già piene), corrispondente a un fattore di ramificazione medio $b \approx 7$. In questo regime, il Minimax equipaggiato con le ottimizzazioni di Alpha-Beta Pruning e Move Ordering si dimostra estremamente efficiente. \\
+La MCTS, invece, mostra il suo vero potenziale in giochi caratterizzati da branching factor proibitivamente elevati, come il Go, dove ogni mossa può essere posizionata su una delle $\approx 250$ intersezioni libere della scacchiera. Per il Forza 4, tuttavia, questo vantaggio si dissolve, rendendo la MCTS una complicazione inutile che introduce overhead senza benefici tangibili. \\\\
+\noindent
+La terza considerazione riguarda l'\textbf{interpretabilità e la trasparenza decisionale} dei due algoritmi. Il Minimax produce un albero di decisione esplicito, permettendo di analizzare esattamente perché una mossa è stata scelta. La MCTS opera tramite statistiche aggregate su simulazioni, rendendo difficile spiegare le decisioni.\\\\
+\noindent
+In sintesi, la scelta del Minimax per il progetto T.W.A.I. riflette un principio di parsimonia ingegneristica: utilizzare la soluzione più semplice che risolve adeguatamente il problema.
+
 \subsection{Pipeline B: Apprendimento Automatico (MLP)}
 La seconda soluzione applica i concetti di apprendimento supervisionato discussi nel corso, utilizzando una rete neurale per approssimare la funzione di valutazione ideale.
 
 \subsubsection{Architettura della Rete Neurale}
-Abbiamo progettato un Multi-Layer Perceptron (MLP), una rete neurale feed-forward costituita da strati densi completamente connessi.
-La scelta di questa architettura non è casuale ma necessaria. I percettroni a singolo strato sono limitati alla risoluzione di problemi linearmente separabili\cite{3}.\\\\
+Le reti neurali artificiali si ispirano al funzionamento del cervello umano, dove neuroni biologici interconnessi elaborano informazioni in parallelo. Nel contesto dei giochi da tavolo, una rete neurale può apprendere pattern strategici complessi osservando migliaia di configurazioni, sviluppando una sorta di "intuizione" statistica senza bisogno di regole esplicite programmate.\\\\
 \noindent
-Poiché la valutazione di una scacchiera di Forza 4 presenta confini decisionali altamente non lineari (una singola pedina può cambiare l'esito da sconfitta a vittoria), è indispensabile l'introduzione di strati nascosti (\textit{hidden layers}).\\\\
-\noindent
-La topologia implementata sfrutta la capacità dell'MLP di agire come approssimatore universale di funzioni ed è così composta:
+A differenza del Minimax, che deve esplorare l'albero di gioco ad ogni mossa, la rete neurale \textit{pre-calcola} durante l'addestramento una funzione di valutazione approssimata. Una volta addestrata, la predizione avviene tramite una semplice moltiplicazione matriciale (forward pass), garantendo tempi di risposta costanti indipendentemente dalla complessità della posizione.
 
+\subsubsection*{Scelta dell'Architettura: Multi-Layer Perceptron (MLP)}
+Abbiamo optato per un Multi-Layer Perceptron, la famiglia più classica di reti neurali feed-forward. Questa scelta è motivata da tre considerazioni fondamentali che ne garantiscono efficacia ed efficienza nel contesto specifico del Forza 4.
 \begin{enumerate}
-    \item \textbf{Input Layer (42 Neuroni):} Riceve il vettore linearizzato della scacchiera (6 x 7), normalizzando lo stato di gioco.
-    \item \textbf{Hidden Layers (64 e 32 Neuroni):} Due strati densi incaricati di estrarre feature latenti dalle posizioni delle pedine.
-    \item \textbf{Activation Function (ReLU):} Utilizziamo la \textit{Rectified Linear Unit} ($f(x) = \max(0, x)$) per gli strati nascosti. Questa funzione è preferita alla sigmoide per le reti profonde in quanto mitiga il problema del \textit{vanishing gradient} e, grazie alla sua semplicità computazionale, favorisce una convergenza più rapida durante l'addestramento.
-    \item \textbf{Output Layer (Classificazione):} Restituisce la predizione sulla classe vincente.
+    \item Il primo fondamento teorico risiede nel \textit{Teorema di Approssimazione Universale}. Secondo il lavoro di Cybenko (1989) e Hornik et al. (1989), un MLP con anche un solo strato nascosto di dimensione sufficiente è in grado di approssimare qualsiasi funzione continua con precisione arbitraria, a patto di disporre di neuroni sufficienti e di una funzione di attivazione non lineare\cite{6}. Questo garantisce teoricamente che l'MLP possa catturare la complessa funzione di valutazione del Forza 4.
+    \item La seconda motivazione emerge dall'analisi dei \textit{limiti strutturali dei percettroni singoli}. I percettroni a singolo strato (introdotti da Rosenblatt nel 1958) sono limitati alla risoluzione di problemi linearmente separabili, come dimostrato da Minsky e Papert (1969)\cite{3}. Nel Forza 4, la valutazione di una posizione dipende da interazioni non lineari tra le pedine: una mossa può essere vincente o perdente a seconda del contesto globale della scacchiera, rendendo indispensabile l'introduzione di strati nascosti capaci di estrarre rappresentazioni intermedie che catturino queste dipendenze contestuali.
+    \item Il terzo fattore determinante riguarda l'\textit{efficienza computazionale}. A differenza di architetture più complesse come le reti convoluzionali (CNN) o ricorrenti (RNN), l'MLP ha una struttura semplice che si traduce in:
+        \begin{itemize}
+        \item Tempi di inferenza estremamente rapidi (alcune decine di microsecondi).
+        \item Facilità di addestramento su dataset di dimensioni moderate (100k campioni).
+        \item Basso overhead computazionale, permettendo deployment su dispositivi con risorse limitate.
+        \end{itemize}
 \end{enumerate}
+\noindent
+\subsubsection*{Topologia Implementata}
+L'architettura della rete è stata progettata seguendo un principio di astrazione progressiva, in cui ogni strato trasforma le informazioni grezze in rappresentazioni sempre più sofisticate della situazione strategica. 
+\begin{itemize}
+    \item \textbf{Input Layer (42 Neuroni):} Riceve il vettore linearizzato della scacchiera ($6 \times 7 = 42$ celle). Ogni neurone corrisponde a una cella e codifica lo stato come valore discreto: $-1$ (AI), $0$ (vuoto), $+1$ (Player).
+    \item \textbf{Primo Hidden Layer (64 Neuroni):} Questo strato apprende rappresentazioni intermedie dei pattern locali (es. "tre pedine allineate con uno spazio vuoto"). La dimensione (64) è stata scelta empiricamente per bilanciare capacità espressiva e rischio di overfitting.
+    \item \textbf{Secondo Hidden Layer (32 Neuroni):} Combina i pattern locali del primo strato in valutazioni strategiche più astratte (es. "controllo del centro", "minacce multiple"). La riduzione progressiva della dimensione ($42 \to 64 \to 32$) implementa un'architettura a "collo di bottiglia" che forza la rete ad estrarre solo le feature più discriminanti.
+    \item \textbf{Activation Function (ReLU):} La \textit{Rectified Linear Unit} ($f(x) = \max(0, x)$) è stata preferita alla sigmoide. \\\\ \noindent La \textit{funzione sigmoide} dominante negli anni '80-'90, comprime l'input nell'intervallo $(0,1)$ rendendolo interpretabile come probabilità. Tuttavia, soffre del problema del \textbf{vanishing gradient}: per valori estremi ($|x| > 5$), la sua derivata tende a zero, causando l'attenuazione esponenziale del segnale di errore durante la backpropagation. Questo rallenta drasticamente l'apprendimento nei primi strati della rete. \\\\ \noindent La \textit{ReLU}, introdotta da Nair e Hinton (2010), risolve questo problema con elegante semplicità: trasmette il segnale inalterato quando $x > 0$ (gradiente costante pari a 1), altrimenti lo azzera. Questa architettura offre tre vantaggi critici: elimina il vanishing gradient mantenendo gradienti stabili, introduce sparsità naturale (circa il 50\% dei neuroni inattivi), e richiede solo un confronto anziché costosi calcoli esponenziali, accelerando significativamente training e inferenza.
+    \item \textbf{Output Layer (3 Neuroni con Softmax):} Produce una distribuzione di probabilità sulle tre classi possibili ($-1$: AI vince, $0$: pareggio, $+1$: Player vince). La funzione softmax garantisce che le probabilità sommino a 1, permettendo un'interpretazione probabilistica dell'incertezza del modello.
+\end{itemize}
 
 \subsubsection{Addestramento (Backpropagation)}
 Il modello è stato addestrato utilizzando l'algoritmo di Backpropagation (propagazione all'indietro dell'errore).
@@ -318,7 +346,7 @@ Il ciclo di apprendimento per ogni epoca segue tre passi fondamentali:
 \end{enumerate}
 \noindent
 Questo processo iterativo consente al modello di apprendere la strategia di gioco codificata nei dati sintetici, riducendo l'errore di classificazione nel tempo.
-
+\newpage
 \section{Valutazione Sperimentale}
 L'obiettivo di questa fase non è solo misurare la "bravura" dell'IA, ma valutare se il sistema è utilizzabile in un contesto reale. Abbiamo analizzato due aspetti chiave: la capacità di generalizzazione (per la Rete Neurale) e la reattività temporale (per il Minimax).
 I test sono stati eseguiti su una macchina locale, simulando le condizioni tipiche di un utente medio.
@@ -337,8 +365,17 @@ Il grafico della \textit{Loss Function} rappresenta l'errore commesso dalla rete
 \noindent
 Come si nota dalla curva, l'errore crolla drasticamente nelle prime epoche: questo indica che la rete apprende molto velocemente le regole base (es. "mettere 4 gettoni in fila vince"). \\\\
 \noindent
-Successivamente, la curva si appiattisce (fase di \textit{plateau}), indicando che il modello sta affinando la sua strategia per le situazioni più sottili. Il fatto che la curva non risalga suggerisce l'assenza di \textit{overfitting} (la rete non sta "imparando a memoria").
-
+Successivamente, la curva si appiattisce (fase di \textit{plateau}), indicando che il modello sta affinando la sua strategia per le situazioni più sottili. Il fatto che la curva non risalga suggerisce l'assenza di \textit{overfitting} (la rete non sta "imparando a memoria").\\\\
+\noindent
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/training_performance.png}
+    \caption{Curve di apprendimento: Training Loss (sinistra) e Validation Accuracy (destra).}
+    \label{fig:training_perf}
+\end{figure}
+\noindent
+Il grafico confronta la Loss Functioncon l'andamento della \textit{Validation Accuracy}: il fatto che essa cresca parallelamente alla riduzione della Loss (senza divergere) dimostra che il modello possiede una buona capacità di generalizzazione e conferma l'assenza di \textit{overfitting}.
+\newpage
 \subsubsection{Analisi degli Errori (Matrice di Confusione)}
 Dove sbaglia l'IA? La matrice di confusione ci aiuta a capirlo.
 
@@ -374,7 +411,6 @@ Abbiamo condotto un'analisi di sensibilità addestrando la stessa architettura d
 \bottomrule
 \end{tabular}
 \end{table}
-\noindent
 \noindent
 Come evidenziato in Tabella \ref{tab:dataset_accuracy}, l'accuratezza scala in modo significativo con la quantità di dati. È interessante notare come il passaggio da 50.000 a 100.000 campioni abbia portato un ulteriore incremento del 3.63\%, portando il modello a sfiorare l'86\% di precisione totale. \\\\
 \noindent
@@ -420,13 +456,42 @@ Dai dati in Tabella \ref{tab:classification_report} emergono considerazioni inte
 \end{itemize}
 \noindent
 
+\subsubsection{Validazione Operativa: Competenza in Partite Reali}
+
+Le metriche di classificazione (Precision, Recall, F1) misurano la capacità 
+del modello di valutare correttamente configurazioni statiche, ma non 
+garantiscono che l'MLP sappia \textit{concatenare} decisioni sequenziali 
+in una partita completa.\\\\
+\noindent
+Per validare l'efficacia operativa, l'MLP è stato testato contro un 
+avversario casuale in condizioni realistiche. La strategia di selezione 
+della mossa dell'MLP opera come segue:
+
+\begin{enumerate}
+    \item \textbf{Controllo Vittoria Immediata}: Se esiste una mossa che 
+    porta alla vittoria immediata dell'AI, viene giocata prioritariamente.
+    
+    \item \textbf{Blocco Minacce}: Se l'avversario ha una mossa vincente, 
+    l'MLP la blocca preventivamente.
+    
+    \item \textbf{Valutazione Posizionale}: Per ogni colonna valida, 
+    l'MLP simula mentalmente la mossa e classifica la configurazione 
+    risultante. Viene scelta la mossa che massimizza il valore predetto 
+    per l'AI (classe -1).
+\end{enumerate}
+
+\noindent
+Questa strategia ibrida combina logica esplicita (win/block detection) 
+con apprendimento statistico (valutazione MLP), garantendo competenza 
+tattica di base anche in presenza di errori di classificazione.
+
 \subsection{Benchmark Minimax (Reattività)}
 Per l'algoritmo Minimax, la precisione è garantita dalla matematica. Il vero nemico è il tempo di esecuzione, che cresce esponenzialmente con la profondità di ricerca.
 In una prima fase, abbiamo misurato le prestazioni dell'algoritmo applicando la sola potatura Alpha-Beta con un ordine di visita delle colonne standard (sequenziale da 0 a 6).
 
 \begin{table}[H]
 \centering
-\caption{Tempi di esecuzione rilevati per Minimax con Alpha-Beta Pruning (Standard)}
+\caption{Tempi di esecuzione rilevati per Minimax con Alpha-Beta Pruning (Standard)} 
 \label{tab:real_benchmark_standard}
 \begin{tabular}{cccc}
 \toprule
@@ -441,7 +506,6 @@ In una prima fase, abbiamo misurato le prestazioni dell'algoritmo applicando la 
 \bottomrule
 \end{tabular}
 \end{table}
-
 \noindent
 Dai dati in Tabella \ref{tab:real_benchmark_standard} emerge chiaramente la natura esponenziale del problema: passando da profondità 5 a 6, il tempo quadruplica (da 0.07s a 0.28s). Sebbene 0.28s sia un tempo accettabile, lascia poco margine per ulteriori approfondimenti.\\\\
 \noindent
@@ -486,16 +550,19 @@ Il confronto finale evidenzia due filosofie opposte:
     Il compromesso 
     è l'accettazione di errori occasionali.
 \end{itemize}
-
+\newpage
 \section{Conclusioni}
 Il progetto T.W.A.I. ha raggiunto l'obiettivo di confrontare due paradigmi fondamentali dell'Intelligenza Artificiale applicati a un dominio a informazione perfetta. \\
 I risultati confermano che, mentre l'approccio simbolico (Minimax) rimane insuperabile in termini di correttezza formale, l'approccio connessionista (MLP) offre un vantaggio decisivo in termini di scalabilità temporale, al costo di una marginale perdita di precisione.\\\\
 \noindent
-L'esperienza ha inoltre evidenziato l'importanza cruciale della fase di Data Engineering: la qualità del dataset generato si è rivelata più determinante dell'architettura della rete stessa per il successo dell'apprendimento.\\\\
+L'esperienza ha evidenziato che la qualità del dataset è più determinante dell'architettura della rete. Il passaggio da un dataset di 2k campioni (67\% accuracy) a 100k (86\% accuracy) ha portato un miglioramento di 19 punti percentuali, dimostrando che "più dati battono algoritmi migliori" (Halevy et al., 2009).
+L'uso del Minimax come oracolo per etichettare stati intermedi (State Sampling) si è rivelato cruciale: evitando di registrare intere partite, abbiamo garantito una copertura uniforme dello spazio degli stati, includendo configurazioni rare ma tatticamente rilevanti.\\\\
 \noindent
-In conclusione, T.W.A.I. dimostra che, sebbene "Tris Was Already Invented", c'è ancora spazio per l'innovazione e la sperimentazione nell'ambito dei giochi da tavolo, offrendo spunti interessanti per futuri sviluppi in IA. 
+T.W.A.I. dimostra che, sebbene "Tris Was Already Invented", c'è ancora spazio per l'innovazione nell'ambito dei giochi da tavolo. La coesistenza di approcci simbolici e connessionisti non è una competizione, ma una complementarità: il Minimax fornisce l'oracolo per addestrare l'MLP, che a sua volta permette deployment in scenari dove il Minimax sarebbe troppo lento.\\\\
+\noindent
+In un'epoca dominata da modelli sempre più complessi, il progetto riafferma un principio fondamentale: \textbf{la semplicità funziona}.
 
-\newpage    
+\newpage
 \printbibliography
 
 \end{document}
